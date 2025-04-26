@@ -7,7 +7,39 @@ import { Id } from "./_generated/dataModel";
  */
 export const list = query({
   handler: async (ctx) => {
-    return await ctx.db.query("chats").order("desc").collect();
+    return await ctx.db
+      .query("chats")
+      .withIndex("by_updatedAt")
+      .order("desc")
+      .collect();
+  },
+});
+
+/**
+ * List chats filtered by model.
+ */
+export const listByModel = query({
+  args: { model: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("chats")
+      .withIndex("by_model", (q) => q.eq("model", args.model))
+      .order("desc")
+      .collect();
+  },
+});
+
+/**
+ * List chats for a specific user, ordered by most recent activity.
+ */
+export const listByUser = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("chats")
+      .withIndex("by_userId_updatedAt", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect();
   },
 });
 
@@ -45,7 +77,7 @@ export const get = query({
 
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_chatId", (q) => q.eq("chatId", args.id))
+      .withIndex("by_chatId_createdAt", (q) => q.eq("chatId", args.id))
       .order("asc")
       .collect();
 

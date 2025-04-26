@@ -8,7 +8,11 @@ export default defineSchema({
     role: v.string(),
     createdAt: v.number(),
     userId: v.optional(v.string()),
-  }).index("by_chatId", ["chatId"]),
+  })
+    .index("by_chatId", ["chatId"])
+    .index("by_chatId_createdAt", ["chatId", "createdAt"])
+    .index("by_role", ["role"])
+    .index("by_userId", ["userId"]),
   
   chats: defineTable({
     title: v.string(),
@@ -16,5 +20,9 @@ export default defineSchema({
     userId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_userId", ["userId"]),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_updatedAt", ["updatedAt"])
+    .index("by_model", ["model"])
+    .index("by_userId_updatedAt", ["userId", "updatedAt"]),
 }); 

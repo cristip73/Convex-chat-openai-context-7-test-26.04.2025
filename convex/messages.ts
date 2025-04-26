@@ -7,11 +7,28 @@ export const list = query({
   handler: async (ctx, args) => {
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .withIndex("by_chatId_createdAt", (q) => 
+        q.eq("chatId", args.chatId)
+      )
       .order("asc")
       .collect();
       
     return messages;
+  },
+});
+
+// Adaug o nouă funcție pentru a căuta după rol
+export const getByRole = query({
+  args: { 
+    chatId: v.string(),
+    role: v.string() 
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_chatId", (q) => q.eq("chatId", args.chatId))
+      .filter((q) => q.eq(q.field("role"), args.role))
+      .collect();
   },
 });
 

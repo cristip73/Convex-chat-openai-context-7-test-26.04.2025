@@ -2,6 +2,7 @@ import { Message } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 import { streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 export const runtime = "edge";
 
@@ -10,7 +11,9 @@ export async function POST(req: NextRequest) {
     const { messages, model } = await req.json();
 
     const result = streamText({
-      model: openai(model ?? "gpt-4.1-mini"),
+      model: model === "claude-3-5-sonnet" 
+        ? anthropic("claude-3-5-sonnet-20240620") 
+        : openai(model ?? "gpt-4.1-mini"),
       messages: messages.map((message: Message) => ({
         role: message.role,
         content: message.content,
