@@ -25,7 +25,7 @@ export function Chat({
   const [chatId, setChatId] = useState<string | null>(initialChatId);
   const [model, setModel] = useState<string>(initialModel);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
 
   // Refresh state when a different chat mounts
   useEffect(() => {

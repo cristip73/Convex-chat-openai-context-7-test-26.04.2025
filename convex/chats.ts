@@ -81,7 +81,18 @@ export const get = query({
       .order("asc")
       .collect();
 
-    return { ...chat, messages };
+    // Conversia obiectelor pentru a fi compatibile cu tipul Message din app
+    const formattedMessages = messages.map(message => ({
+      id: message._id,
+      content: message.content,
+      role: message.role, // Acum este compatibil cu tipul "user" | "assistant" | "system"
+      createdAt: message.createdAt
+    }));
+
+    return { 
+      ...chat, 
+      messages: formattedMessages 
+    };
   },
 });
 

@@ -36,7 +36,11 @@ export const send = mutation({
   args: {
     chatId: v.string(),
     content: v.string(),
-    role: v.string(),
+    role: v.union(
+      v.literal("user"),
+      v.literal("assistant"),
+      v.literal("system")
+    ),
   },
   handler: async (ctx, args) => {
     // Optional: Add user authentication here

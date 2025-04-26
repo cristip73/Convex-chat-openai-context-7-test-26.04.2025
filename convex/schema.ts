@@ -5,7 +5,11 @@ export default defineSchema({
   messages: defineTable({
     chatId: v.string(),
     content: v.string(),
-    role: v.string(),
+    role: v.union(
+      v.literal("user"),
+      v.literal("assistant"),
+      v.literal("system")
+    ),
     createdAt: v.number(),
     userId: v.optional(v.string()),
   })
