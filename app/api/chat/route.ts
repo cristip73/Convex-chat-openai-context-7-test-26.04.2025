@@ -7,10 +7,10 @@ export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
-    
+    const { messages, model } = await req.json();
+
     const result = streamText({
-      model: openai("gpt-4.1-mini"),
+      model: openai(model ?? "gpt-4.1-mini"),
       messages: messages.map((message: Message) => ({
         role: message.role,
         content: message.content,

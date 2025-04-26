@@ -12,6 +12,7 @@ export default defineSchema({
   
   chats: defineTable({
     title: v.string(),
+    model: v.optional(v.string()),
     userId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),

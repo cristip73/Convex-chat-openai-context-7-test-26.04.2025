@@ -8,6 +8,7 @@ export interface Message {
 export interface Chat {
   id?: string;
   title: string;
+  model?: string;
   messages?: Message[];
   userId?: string;
   createdAt?: number;

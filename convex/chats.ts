@@ -1,46 +1,39 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Doc, Id } from "./_generated/dataModel";
+import { Id } from "./_generated/dataModel";
 
+/**
+ * List all chats (no user filtering yet).
+ */
 export const list = query({
   handler: async (ctx) => {
-    // Optional: Add user authentication here
-    // const identity = await ctx.auth.getUserIdentity();
-    // const userId = identity?.tokenIdentifier;
-    // if (!userId) return [];
-    
-    // For now, list all chats without user filtering
-    const chats = await ctx.db
-      .query("chats")
-      .order("desc")
-      .collect();
-      
-    return chats;
+    return await ctx.db.query("chats").order("desc").collect();
   },
 });
 
+/**
+ * Create a new chat.
+ */
 export const create = mutation({
   args: {
     title: v.string(),
+    model: v.string(), // e.g. "gpt-4.1-mini"
   },
   handler: async (ctx, args) => {
-    // Optional: Add user authentication here
-    // const identity = await ctx.auth.getUserIdentity();
-    // const userId = identity?.tokenIdentifier;
-    
     const now = Date.now();
-    
     const chatId = await ctx.db.insert("chats", {
       title: args.title,
-      // userId: userId,
+      model: args.model,
       createdAt: now,
       updatedAt: now,
     });
-    
     return chatId;
   },
 });
 
+/**
+ * Fetch a chat together with its messages.
+ */
 export const get = query({
   args: { id: v.string() },
   handler: async (ctx, args) => {
@@ -48,59 +41,52 @@ export const get = query({
       .query("chats")
       .filter((q) => q.eq(q.field("_id"), args.id))
       .first();
-      
-    if (!chat) {
-      return null;
-    }
-    
-    // Get chat messages
+    if (!chat) return null;
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_chatId", (q) => q.eq("chatId", args.id))
       .order("asc")
       .collect();
-      
-    return {
-      ...chat,
-      messages,
-    };
+
+    return { ...chat, messages };
   },
 });
 
+/**
+ * Change the model for an existing chat.
+ */
+export const setModel = mutation({
+  args: { id: v.string(), model: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id as Id<"chats">, {
+      model: args.model,
+      updatedAt: Date.now(),
+    });
+    return args.id;
+  },
+});
+
+/**
+ * Remove a chat and all its messages.
+ */
 export const remove = mutation({
   args: { id: v.string() },
   handler: async (ctx, args) => {
-    // Optional: Add user authentication here
-    // const identity = await ctx.auth.getUserIdentity();
-    // const userId = identity?.tokenIdentifier;
-    
     const chat = await ctx.db
       .query("chats")
       .filter((q) => q.eq(q.field("_id"), args.id))
       .first();
-      
-    if (!chat) {
-      throw new Error("Chat not found");
-    }
-    
-    // Check if the user owns the chat (if authentication is implemented)
-    // if (chat.userId !== userId) {
-    //   throw new Error("Unauthorized");
-    // }
-    
-    // Delete the chat
+    if (!chat) throw new Error("Chat not found");
+
     await ctx.db.delete(chat._id);
-    
-    // Delete all messages associated with this chat
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_chatId", (q) => q.eq("chatId", args.id))
       .collect();
-      
-    for (const message of messages) {
-      await ctx.db.delete(message._id);
-    }
-    
+    for (const msg of messages) await ctx.db.delete(msg._id);
+
     return chat._id;
   },
 }); 

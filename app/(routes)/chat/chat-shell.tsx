@@ -19,6 +19,7 @@ export default function ChatShell() {
     selectedChatId ? { id: selectedChatId } : "skip"
   );
   const initialMessages: Message[] = chatData?.messages ?? [];
+  const initialModel: string = chatData?.model ?? "gpt-4.1-mini";
 
   /** User picked a chat from the sidebar. */
   const handleSelectChat = (id: string | null) => {
@@ -44,6 +45,7 @@ export default function ChatShell() {
           key={selectedChatId ? selectedChatId : `new-${newChatCounter}`}
           initialChatId={selectedChatId}
           initialMessages={initialMessages}
+          initialModel={initialModel}
         />
       </div>
     </div>

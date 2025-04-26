@@ -7,53 +7,70 @@ import { ChatInput } from "@/components/chat-input";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { nanoid } from "nanoid";
+import { ModelSelector } from "@/components/model-selector";
 
 interface ChatProps {
   initialChatId?: string | null;
   initialMessages?: Message[];
+  initialModel?: string;
 }
 
 export function Chat({
   initialChatId = null,
   initialMessages = [],
+  initialModel = "gpt-4.1-mini",
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [chatId, setChatId] = useState<string | null>(initialChatId);
+  const [model, setModel] = useState<string>(initialModel);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Refresh state when a different chat is mounted (component remounted via key)
+  // Refresh state when a different chat mounts
   useEffect(() => {
     setChatId(initialChatId);
     setMessages(initialMessages);
-    // Focus the chat input on mount or when chat changes
+    setModel(initialModel);
     inputRef.current?.focus();
-  }, [initialChatId, initialMessages]);
+  }, [initialChatId, initialMessages, initialModel]);
 
   const createChat = useMutation(api.chats.create);
   const sendMessage = useMutation(api.messages.send);
+  const setChatModel = useMutation(api.chats.setModel);
+
+  const handleModelChange = async (newModel: string) => {
+    setModel(newModel);
+    if (chatId) {
+      try {
+        await setChatModel({ id: chatId, model: newModel });
+      } catch (err) {
+        console.error("Failed to update model", err);
+      }
+    }
+  };
 
   const handleSendMessage = useCallback(
     async (content: string) => {
       try {
         let currentChatId = chatId;
 
-        // ─── Create chat if needed ────────────────────────────────────────────────
+        // Create chat if it doesn't exist yet
         if (!currentChatId) {
           currentChatId = await createChat({
             title: content.slice(0, 30) + "...",
+            model,
           });
           setChatId(currentChatId);
         }
 
-        // ─── USER MESSAGE ─────────────────────────────────────────────────────────
+        // USER MESSAGE
         const userMessage: Message = {
           id: nanoid(),
           content,
           role: "user",
           createdAt: Date.now(),
         };
-
         setMessages((prev) => [...prev, userMessage]);
 
         await sendMessage({
@@ -62,7 +79,7 @@ export function Chat({
           role: "user",
         });
 
-        // ─── CALL LLM ENDPOINT (stream) ──────────────────────────────────────────
+        // CALL LLM ENDPOINT (stream)
         setIsLoading(true);
 
         const response = await fetch("/api/chat", {
@@ -70,6 +87,7 @@ export function Chat({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: [...messages, userMessage],
+            model,
           }),
         });
 
@@ -107,7 +125,7 @@ export function Chat({
           );
         }
 
-        // Persist assistant message (including first one!)
+        // Persist assistant message
         await sendMessage({
           chatId: currentChatId,
           content: assistantText,
@@ -119,15 +137,18 @@ export function Chat({
         setIsLoading(false);
       }
     },
-    [chatId, createChat, messages, sendMessage]
+    [chatId, createChat, messages, sendMessage, model]
   );
 
   return (
     <div className="flex flex-col h-full">
-      <div className="border-b p-4">
+      <div className="border-b p-4 flex items-center justify-between gap-4">
         <h1 className="text-xl font-bold">Chat</h1>
+        <ModelSelector value={model} onChange={handleModelChange} />
       </div>
+
       <ChatList messages={messages} />
+
       <ChatInput
         onSend={handleSendMessage}
         isLoading={isLoading}
