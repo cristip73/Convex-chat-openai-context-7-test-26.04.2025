@@ -1,14 +1,11 @@
-import { Chat } from "./chat";
+import { Metadata } from "next";
+import ChatShell from "./chat-shell";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Chat",
   description: "Chat with GPT-4",
 };
 
 export default function ChatPage() {
-  return (
-    <div className="h-screen flex flex-col">
-      <Chat />
-    </div>
-  );
+  return <ChatShell />;
 } 

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const { messages } = await req.json();
     
     const result = streamText({
-      model: openai("gpt-4-1106-preview"),
+      model: openai("gpt-4.1-mini"),
       messages: messages.map((message: Message) => ({
         role: message.role,
         content: message.content,

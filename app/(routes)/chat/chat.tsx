@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Message } from "@/lib/types";
 import { ChatList } from "@/components/chat-list";
 import { ChatInput } from "@/components/chat-input";
@@ -8,72 +8,80 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { nanoid } from "nanoid";
 
-export function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [chatId, setChatId] = useState<string | null>(null);
+interface ChatProps {
+  initialChatId?: string | null;
+  initialMessages?: Message[];
+}
+
+export function Chat({
+  initialChatId = null,
+  initialMessages = [],
+}: ChatProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatId, setChatId] = useState<string | null>(initialChatId);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Refresh state when a different chat is mounted (component remounted via key)
+  useEffect(() => {
+    setChatId(initialChatId);
+    setMessages(initialMessages);
+    // Focus the chat input on mount or when chat changes
+    inputRef.current?.focus();
+  }, [initialChatId, initialMessages]);
+
   const createChat = useMutation(api.chats.create);
   const sendMessage = useMutation(api.messages.send);
 
   const handleSendMessage = useCallback(
     async (content: string) => {
       try {
-        // If this is a new conversation, create a chat first
-        if (!chatId) {
-          const newChatId = await createChat({ title: content.slice(0, 30) + "..." });
-          setChatId(newChatId);
+        let currentChatId = chatId;
+
+        // ─── Create chat if needed ────────────────────────────────────────────────
+        if (!currentChatId) {
+          currentChatId = await createChat({
+            title: content.slice(0, 30) + "...",
+          });
+          setChatId(currentChatId);
         }
-        
-        // Add user message to UI
+
+        // ─── USER MESSAGE ─────────────────────────────────────────────────────────
         const userMessage: Message = {
           id: nanoid(),
           content,
           role: "user",
           createdAt: Date.now(),
         };
-        
+
         setMessages((prev) => [...prev, userMessage]);
+
+        await sendMessage({
+          chatId: currentChatId,
+          content,
+          role: "user",
+        });
+
+        // ─── CALL LLM ENDPOINT (stream) ──────────────────────────────────────────
         setIsLoading(true);
-        
-        // Save user message to database
-        if (chatId) {
-          await sendMessage({
-            chatId,
-            content,
-            role: "user",
-          });
-        }
-        
-        // Call the API
+
         const response = await fetch("/api/chat", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: [...messages, userMessage],
           }),
         });
-        
-        // Error handling
-        if (!response.ok) {
-          throw new Error("Failed to send message");
-        }
-        
-        // Verificăm dacă există un ReadableStream
-        if (!response.body) {
-          throw new Error("No response body");
-        }
-        
-        // Creăm un reader pentru a citi stream-ul
+
+        if (!response.ok) throw new Error("Failed to send message");
+        if (!response.body) throw new Error("No response body");
+
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let responseText = "";
-        
-        // Id unic pentru răspunsul asistent care se construiește
+        let assistantText = "";
         const assistantMessageId = "assistant-" + nanoid();
-        
-        // Adăugăm un mesaj gol pentru asistent
+
+        // Placeholder assistant message
         setMessages((prev) => [
           ...prev,
           {
@@ -83,36 +91,30 @@ export function Chat() {
             createdAt: Date.now(),
           },
         ]);
-        
-        // Procesăm stream-ul - acum citim direct text raw
+
+        // Stream chunks
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
-          // Decodăm chunk-ul curent ca text simplu
-          const chunk = decoder.decode(value, { stream: true });
-          responseText += chunk;
-          
-          // Actualizăm mesajul asistentului cu textul colectat până acum
+          assistantText += decoder.decode(value, { stream: true });
+
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantMessageId
-                ? { ...m, content: responseText }
+                ? { ...m, content: assistantText }
                 : m
             )
           );
         }
-        
-        // Save the complete assistant response to database
-        if (chatId) {
-          await sendMessage({
-            chatId,
-            content: responseText,
-            role: "assistant",
-          });
-        }
-      } catch (error) {
-        console.error("Error sending message:", error);
+
+        // Persist assistant message (including first one!)
+        await sendMessage({
+          chatId: currentChatId,
+          content: assistantText,
+          role: "assistant",
+        });
+      } catch (err) {
+        console.error("Error sending message:", err);
       } finally {
         setIsLoading(false);
       }
@@ -126,7 +128,11 @@ export function Chat() {
         <h1 className="text-xl font-bold">Chat</h1>
       </div>
       <ChatList messages={messages} />
-      <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+      <ChatInput
+        onSend={handleSendMessage}
+        isLoading={isLoading}
+        inputRef={inputRef}
+      />
     </div>
   );
 } 

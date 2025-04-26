@@ -8,9 +8,10 @@ import { SendIcon } from "lucide-react";
 interface ChatInputProps {
   onSend: (message: string) => void;
   isLoading: boolean;
+  inputRef: React.RefObject<HTMLInputElement>;
 }
 
-export function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading, inputRef }: ChatInputProps) {
   const [input, setInput] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,6 +25,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
   return (
     <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t">
       <Input
+        ref={inputRef}
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Type a message..."
