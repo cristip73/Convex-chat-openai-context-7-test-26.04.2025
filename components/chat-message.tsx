@@ -31,7 +31,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       <div className="flex-1 space-y-2">
         <div className="flex flex-col">
           <span className="font-semibold">
-            {isUser ? "You" : "ChatGPT"}
+            {isUser ? "You" : "CristiGPT"}
           </span>
           {message.createdAt ? (
             <span className="text-xs text-muted-foreground">

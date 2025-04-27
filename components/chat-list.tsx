@@ -20,7 +20,7 @@ export function ChatList({ messages }: ChatListProps) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="text-center space-y-2">
-          <h3 className="text-lg font-semibold">Welcome to ChatGPT</h3>
+          <h3 className="text-lg font-semibold">Welcome to CristiGPT</h3>
           <p className="text-muted-foreground">
             Start a conversation by typing a message below.
           </p>

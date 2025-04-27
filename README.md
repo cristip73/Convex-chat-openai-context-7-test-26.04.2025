@@ -1,4 +1,4 @@
-# ChatGPT Clone
+# CristiGPT Clone
 
 A responsive ChatGPT-like application built with Next.js, Convex, and Vercel AI SDK.
 

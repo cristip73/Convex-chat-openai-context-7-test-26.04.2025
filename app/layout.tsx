@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ChatGPT Clone",
-  description: "A ChatGPT clone built with Next.js, Convex, and Vercel AI SDK",
+  title: "CristiGPT",
+  description: "A ChatGPT clone built by Cristi with Next.js, Convex, and Vercel AI SDK",
 };
 
 export default function RootLayout({
