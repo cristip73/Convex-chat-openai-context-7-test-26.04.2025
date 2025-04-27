@@ -22,7 +22,7 @@ export function ChatSidebar({
   return (
     <div
       className={cn(
-        "transition-all border-r bg-sidebar flex flex-col",
+        "transition-all border-r bg-sidebar flex flex-col fixed md:relative z-30 h-full",
         collapsed ? "w-0 md:w-12" : "w-64"
       )}
     >

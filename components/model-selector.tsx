@@ -25,7 +25,7 @@ export function ModelSelector({ value, onChange, className }: ModelSelectorProps
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "border-input dark:bg-input/30 bg-background h-9 rounded-md border px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "border-input dark:bg-input/30 bg-background h-8 rounded-md border px-2 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] text-ellipsis",
         className
       )}
     >

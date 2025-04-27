@@ -141,19 +141,23 @@ export function Chat({
   );
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="border-b p-4 flex items-center justify-between gap-4">
-        <h1 className="text-xl font-bold">Chat</h1>
-        <ModelSelector value={model} onChange={handleModelChange} />
+    <div className="flex flex-col h-full max-h-[100dvh]">
+      <div className="border-b py-2 px-4 flex items-center justify-between gap-2 sticky top-0 bg-background z-20">
+        <h1 className="text-xl font-bold truncate">Chat</h1>
+        <ModelSelector value={model} onChange={handleModelChange} className="max-w-[180px]" />
       </div>
 
-      <ChatList messages={messages} />
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <ChatList messages={messages} />
+      </div>
 
-      <ChatInput
-        onSend={handleSendMessage}
-        isLoading={isLoading}
-        inputRef={inputRef}
-      />
+      <div className="sticky bottom-0 w-full bg-background z-20">
+        <ChatInput
+          onSend={handleSendMessage}
+          isLoading={isLoading}
+          inputRef={inputRef}
+        />
+      </div>
     </div>
   );
 } 

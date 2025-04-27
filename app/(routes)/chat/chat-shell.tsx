@@ -34,13 +34,13 @@ export default function ChatShell() {
   };
 
   return (
-    <div className="h-screen flex">
+    <div className="h-[100dvh] flex overflow-hidden">
       <ChatSidebar
         selectedChatId={selectedChatId}
         onSelectChat={handleSelectChat}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col md:ml-0 ml-12">
         <Chat
           key={selectedChatId ? selectedChatId : `new-${newChatCounter}`}
           initialChatId={selectedChatId}

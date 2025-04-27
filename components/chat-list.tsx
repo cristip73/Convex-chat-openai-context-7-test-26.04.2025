@@ -30,7 +30,7 @@ export function ChatList({ messages }: ChatListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="w-full">
       {messages.map((message, index) => (
         <ChatMessage key={index} message={message} />
       ))}
