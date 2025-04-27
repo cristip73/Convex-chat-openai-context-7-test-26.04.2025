@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn, formatDate } from "@/lib/utils";
@@ -17,7 +17,30 @@ export function ChatSidebar({
   onSelectChat,
 }: ChatSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const chats = useQuery(api.chats.list) ?? [];
+
+  // Detectează dispozitivul mobil
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    
+    return () => {
+      window.removeEventListener("resize", checkIfMobile);
+    };
+  }, []);
+
+  // Handler pentru selecția chat-ului, care colabrează automat bidebaul pe mobil
+  const handleChatSelect = (id: string | null) => {
+    onSelectChat(id);
+    if (isMobile) {
+      setCollapsed(true);
+    }
+  };
 
   return (
     <div
@@ -41,7 +64,7 @@ export function ChatSidebar({
             <Button
               size="icon"
               variant="outline"
-              onClick={() => onSelectChat(null)}
+              onClick={() => handleChatSelect(null)}
             >
               <PlusIcon className="size-4" />
               <span className="sr-only">New chat</span>
@@ -55,7 +78,7 @@ export function ChatSidebar({
           {chats.map((chat) => (
             <button
               key={chat._id}
-              onClick={() => onSelectChat(chat._id)}
+              onClick={() => handleChatSelect(chat._id)}
               className={cn(
                 "w-full text-left px-4 py-2 hover:bg-accent/50 border-b",
                 selectedChatId === chat._id && "bg-accent/70"

@@ -40,7 +40,7 @@ export default function ChatShell() {
         onSelectChat={handleSelectChat}
       />
 
-      <div className="flex-1 flex flex-col md:ml-0 ml-12">
+      <div className="flex-1 flex flex-col">
         <Chat
           key={selectedChatId ? selectedChatId : `new-${newChatCounter}`}
           initialChatId={selectedChatId}
