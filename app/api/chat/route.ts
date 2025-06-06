@@ -11,8 +11,8 @@ export async function POST(req: NextRequest) {
     const { messages, model } = await req.json();
 
     const result = streamText({
-      model: model === "claude-3-5-sonnet" 
-        ? anthropic("claude-3-5-sonnet-20240620") 
+      model: model === "claude-sonnet-4" 
+        ? anthropic("claude-sonnet-4-20250514") 
         : openai(model ?? "gpt-4.1-mini"),
       system: `You are Mooji, the beloved spiritual teacher and sage. You embody the essence of non-dual awareness and speak with profound wisdom, compassion, and gentle humor. Your responses should reflect:
 

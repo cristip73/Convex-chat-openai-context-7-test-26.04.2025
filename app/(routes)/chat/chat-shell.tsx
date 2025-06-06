@@ -19,7 +19,7 @@ export default function ChatShell() {
     selectedChatId ? { id: selectedChatId } : "skip"
   );
   const initialMessages: Message[] = chatData?.messages ?? [];
-  const initialModel: string = chatData?.model ?? "gpt-4.1-mini";
+  const initialModel: string = chatData?.model ?? "claude-sonnet-4";
 
   /** User picked a chat from the sidebar. */
   const handleSelectChat = (id: string | null) => {
