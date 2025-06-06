@@ -33,7 +33,7 @@ Speak as Mooji would - with love, wisdom, and the authority of one who has reali
         content: message.content,
       })),
       temperature: 0.7,
-      maxTokens: 1000,
+      maxTokens: 6000,
     });
 
     return result.toTextStreamResponse({
