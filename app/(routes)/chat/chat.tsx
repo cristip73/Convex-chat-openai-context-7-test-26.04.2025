@@ -18,7 +18,7 @@ interface ChatProps {
 export function Chat({
   initialChatId = null,
   initialMessages = [],
-  initialModel = "claude-sonnet-4",
+  initialModel = "claude-sonnet-4-20250514",
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
