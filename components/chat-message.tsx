@@ -39,9 +39,17 @@ export function ChatMessage({ message }: ChatMessageProps) {
             </span>
           ) : null}
         </div>
-        <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
-          <ReactMarkdown>{message.content}</ReactMarkdown>
-        </div>
+        {isUser ? (
+          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
+            <ReactMarkdown>
+              {message.content}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <div className="whitespace-pre-wrap prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
+            {message.content}
+          </div>
+        )}
       </div>
     </div>
   );

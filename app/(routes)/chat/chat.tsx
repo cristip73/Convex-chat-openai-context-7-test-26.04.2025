@@ -22,10 +22,12 @@ export function Chat({
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [chatId, setChatId] = useState<string | null>(initialChatId);
   const [model, setModel] = useState<string>(initialModel);
-
+  
   const inputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Refresh state when a different chat mounts
   useEffect(() => {
@@ -49,6 +51,15 @@ export function Chat({
       }
     }
   };
+
+  const handleStopStreaming = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsStreaming(false);
+      setIsLoading(false);
+    }
+  }, []);
 
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -81,6 +92,11 @@ export function Chat({
 
         // CALL LLM ENDPOINT (stream)
         setIsLoading(true);
+        setIsStreaming(true);
+
+        // Create new AbortController for this request
+        abortControllerRef.current = new AbortController();
+        const currentAbortController = abortControllerRef.current;
 
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -89,6 +105,7 @@ export function Chat({
             messages: [...messages, userMessage],
             model,
           }),
+          signal: currentAbortController.signal,
         });
 
         if (!response.ok) throw new Error("Failed to send message");
@@ -111,30 +128,57 @@ export function Chat({
         ]);
 
         // Stream chunks
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          assistantText += decoder.decode(value, { stream: true });
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            // Check if we were aborted
+            if (currentAbortController.signal.aborted) {
+              break;
+            }
+            
+            assistantText += decoder.decode(value, { stream: true });
 
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantMessageId
-                ? { ...m, content: assistantText }
-                : m
-            )
-          );
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId
+                  ? { ...m, content: assistantText }
+                  : m
+              )
+            );
+          }
+        } catch (error) {
+          // If it's an abort error, we don't need to throw
+          if (error instanceof Error && error.name === 'AbortError') {
+            console.log('Stream was aborted by user');
+          } else {
+            throw error;
+          }
         }
 
-        // Persist assistant message
-        await sendMessage({
-          chatId: currentChatId,
-          content: assistantText,
-          role: "assistant",
-        });
+        // Save assistant message if there's any content, even if aborted
+        if (assistantText.trim()) {
+          try {
+            await sendMessage({
+              chatId: currentChatId,
+              content: assistantText,
+              role: "assistant",
+            });
+          } catch (error) {
+            console.error('Failed to save partial message:', error);
+          }
+        }
       } catch (err) {
-        console.error("Error sending message:", err);
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('Request was aborted');
+        } else {
+          console.error("Error sending message:", err);
+        }
       } finally {
         setIsLoading(false);
+        setIsStreaming(false);
+        abortControllerRef.current = null;
       }
     },
     [chatId, createChat, messages, sendMessage, model]
@@ -154,7 +198,9 @@ export function Chat({
       <div className="sticky bottom-0 w-full bg-background z-20">
         <ChatInput
           onSend={handleSendMessage}
+          onStop={handleStopStreaming}
           isLoading={isLoading}
+          isStreaming={isStreaming}
           inputRef={inputRef}
         />
       </div>

@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
 
     const result = streamText({
       model: selectedModel,
+      // Forward the abort signal from the request
+      abortSignal: req.signal,
       system: `You are Mooji, the beloved spiritual teacher and sage. You embody the essence of non-dual awareness and speak with profound wisdom, compassion, and gentle humor. Your responses should reflect:
 
 - Deep spiritual insight rooted in Advaita Vedanta and non-dual awareness
@@ -44,7 +46,15 @@ Speak as Mooji would - with love, wisdom, and the authority of one who has reali
       })),
       temperature: 0.7,
       maxTokens: 6000,
+      onError({ error }) {
+        // Handle streaming errors gracefully
+        console.log('Streaming error handled:', error instanceof Error ? error.message : 'Unknown streaming error');
+      },
     });
+
+    // Consume the stream to ensure it runs to completion & prevents hanging connections
+    // even when the client response is aborted
+    result.consumeStream(); // no await - runs in background
 
     return result.toTextStreamResponse({
       headers: {
@@ -52,6 +62,12 @@ Speak as Mooji would - with love, wisdom, and the authority of one who has reali
       },
     });
   } catch (error) {
+    // Handle abort errors gracefully
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log('Request was aborted by client');
+      return new Response(null, { status: 499 }); // Client closed request
+    }
+    
     console.error("Chat API Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
