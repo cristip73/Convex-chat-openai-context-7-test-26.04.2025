@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { paginationOptsValidator } from "convex/server";
 
 /**
  * List all chats (no user filtering yet).
@@ -12,6 +13,32 @@ export const list = query({
       .withIndex("by_updatedAt")
       .order("desc")
       .collect();
+  },
+});
+
+/**
+ * List chats with pagination support.
+ */
+export const listPaginated = query({
+  args: { 
+    paginationOpts: paginationOptsValidator,
+    userId: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    let query = ctx.db
+      .query("chats")
+      .withIndex("by_updatedAt")
+      .order("desc");
+    
+    // Optional user filtering for future use
+    if (args.userId) {
+      query = ctx.db
+        .query("chats")
+        .withIndex("by_userId_updatedAt", (q) => q.eq("userId", args.userId))
+        .order("desc");
+    }
+    
+    return await query.paginate(args.paginationOpts);
   },
 });
 
