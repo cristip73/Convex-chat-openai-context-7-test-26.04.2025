@@ -78,6 +78,10 @@ export function UnifiedHeader({
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
+          <Button size="icon" variant="outline" onClick={handleNewChat}>
+            <PlusIcon className="h-4 w-4" />
+            <span className="sr-only">New chat</span>
+          </Button>
           {showModelSelector && (
             <ModelSelector 
               value={currentModel} 
@@ -86,10 +90,6 @@ export function UnifiedHeader({
             />
           )}
           <ModeToggle />
-          <Button size="icon" variant="outline" onClick={handleNewChat}>
-            <PlusIcon className="h-4 w-4" />
-            <span className="sr-only">New chat</span>
-          </Button>
         </div>
       </div>
     </header>

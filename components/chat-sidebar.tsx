@@ -278,14 +278,8 @@ export function ChatSidebar({
     };
   }, []);
 
-  // Save collapsed state to sessionStorage whenever it changes
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(STORAGE_KEYS.COLLAPSED_STATE, JSON.stringify(collapsed));
-    } catch (error) {
-      console.error("Failed to save collapsed state to session storage:", error);
-    }
-  }, [collapsed]);
+  // Note: Collapsed state is now managed by ChatShell to prevent flicker
+  // No need to save to sessionStorage here as ChatShell handles it
 
   // Memoized handler pentru selecția chat-ului, care colabrează automat bidebaul pe mobil
   const handleChatSelect = useCallback((id: string | null) => {

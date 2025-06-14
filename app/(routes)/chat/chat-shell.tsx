@@ -15,7 +15,19 @@ interface ChatShellProps {
 export default function ChatShell({ chatId: propChatId = null }: ChatShellProps) {
   // Use prop chatId or fall back to state for new chat navigation
   const [newChatCounter, setNewChatCounter] = useState(0);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  
+  // Initialize sidebar collapsed state from sessionStorage to prevent flicker
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const savedCollapsed = sessionStorage.getItem('chatSidebar_collapsedState');
+      return savedCollapsed ? JSON.parse(savedCollapsed) : false;
+    } catch (error) {
+      console.error("Failed to restore collapsed state from session storage:", error);
+      return false;
+    }
+  });
+  
   const [currentModel, setCurrentModel] = useState("gemini-2.5-flash-preview-05-20");
   
   // Current chat ID is either from URL params or local state
@@ -33,6 +45,15 @@ export default function ChatShell({ chatId: propChatId = null }: ChatShellProps)
   useEffect(() => {
     setCurrentModel(initialModel);
   }, [initialModel]);
+
+  // Save sidebar collapsed state to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('chatSidebar_collapsedState', JSON.stringify(sidebarCollapsed));
+    } catch (error) {
+      console.error("Failed to save collapsed state to session storage:", error);
+    }
+  }, [sidebarCollapsed]);
 
   /** User picked a chat from the sidebar - now handled by router navigation */
   const handleSelectChat = (id: string | null) => {
