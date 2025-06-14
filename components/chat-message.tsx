@@ -41,13 +41,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
           ) : null}
         </div>
         {isUser ? (
-          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
+          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none markdown-content">
             <ReactMarkdown remarkPlugins={[remarkBreaks]}>
               {message.content}
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
+          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none markdown-content">
             <ReactMarkdown remarkPlugins={[remarkBreaks]}>
               {message.content}
             </ReactMarkdown>

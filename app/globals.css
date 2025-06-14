@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -118,5 +119,16 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for markdown paragraph spacing */
+@layer components {
+  .markdown-content p {
+    margin-bottom: 1.25rem; /* 20px spacing between paragraphs */
+  }
+  
+  .markdown-content p:last-child {
+    margin-bottom: 0; /* Remove margin from last paragraph */
   }
 }
