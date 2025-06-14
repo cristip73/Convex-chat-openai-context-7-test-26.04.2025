@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import { BotIcon, UserIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 interface ChatMessageProps {
   message: Message;
@@ -41,13 +42,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
         </div>
         {isUser ? (
           <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
-            <ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkBreaks]}>
               {message.content}
             </ReactMarkdown>
           </div>
         ) : (
           <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none">
-            <ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkBreaks]}>
               {message.content}
             </ReactMarkdown>
           </div>
