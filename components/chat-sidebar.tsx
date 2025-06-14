@@ -128,6 +128,8 @@ export function ChatSidebar({
   // Initialize or refresh pagination state with first load
   useEffect(() => {
     if (initialChats && (paginationState.chats.length === 0 || shouldRefresh)) {
+
+      
       setPaginationState({
         chats: initialChats.page,
         isLoading: false,
@@ -169,21 +171,29 @@ export function ChatSidebar({
     }
   }, []);
 
-  // Listen for new chat creation events
+  // Listen for chat events (creation and updates)
   useEffect(() => {
-    const handleChatCreated = (event: Event) => {
-      console.log("New chat created, refreshing sidebar...", event.type);
+    const handleChatCreated = () => {
       // Clear sessionStorage to force fresh load
       sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
       // Trigger refresh
       setShouldRefresh(true);
     };
 
-    // Listen for custom event from chat creation
+    const handleChatUpdated = () => {
+      // Clear sessionStorage to force fresh load and reordering
+      sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
+      // Trigger refresh
+      setShouldRefresh(true);
+    };
+
+    // Listen for custom events
     window.addEventListener('chatCreated', handleChatCreated);
+    window.addEventListener('chatUpdated', handleChatUpdated);
     
     return () => {
       window.removeEventListener('chatCreated', handleChatCreated);
+      window.removeEventListener('chatUpdated', handleChatUpdated);
     };
   }, []);
 

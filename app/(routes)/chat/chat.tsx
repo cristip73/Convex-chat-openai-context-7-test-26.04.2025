@@ -107,6 +107,13 @@ export function Chat({
           role: "user",
         });
 
+        // Emit event to notify sidebar about chat activity (for reordering)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('chatUpdated', { 
+            detail: { chatId: currentChatId } 
+          }));
+        }
+
         // CALL LLM ENDPOINT (stream)
         setIsLoading(true);
         setIsStreaming(true);
@@ -182,6 +189,13 @@ export function Chat({
               content: assistantText,
               role: "assistant",
             });
+
+            // Emit event to notify sidebar about chat activity (for reordering)
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('chatUpdated', { 
+                detail: { chatId: currentChatId } 
+              }));
+            }
           } catch (error) {
             console.error('Failed to save partial message:', error);
           }
