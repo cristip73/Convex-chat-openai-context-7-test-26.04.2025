@@ -75,6 +75,13 @@ export function Chat({
             model,
           });
           
+          // Emit event to notify sidebar about new chat creation
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('chatCreated', { 
+              detail: { chatId: currentChatId } 
+            }));
+          }
+          
           // Redirect immediately and let the new component handle the message
           router.replace(`/chat/${currentChatId}`);
           
