@@ -21,7 +21,7 @@ A responsive ChatGPT-like application built with Next.js, Convex, and Vercel AI 
 - [Anthropic Claude](https://anthropic.com/) - AI Model
 - [Google Gemini 2.5 Flash](https://ai.google.dev/) - AI Model
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [React](https://reactjs.org/) - UI Library
+- [React](https://reactjs.org/) - UI Library 
 
 ## Getting Started
 
