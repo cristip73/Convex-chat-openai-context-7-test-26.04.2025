@@ -118,8 +118,13 @@ export function ChatSidebar({
     let timeoutId: NodeJS.Timeout;
     return (e: React.UIEvent<HTMLDivElement>) => {
       clearTimeout(timeoutId);
+      // Capture the current target immediately before the timeout
+      const currentTarget = e.currentTarget;
       timeoutId = setTimeout(() => {
-        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        // Check if the element still exists
+        if (!currentTarget) return;
+        
+        const { scrollTop, scrollHeight, clientHeight } = currentTarget;
         const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
         
         // Trigger load when 90% scrolled
