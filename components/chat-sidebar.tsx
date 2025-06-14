@@ -70,6 +70,18 @@ const STORAGE_KEYS = {
   COLLAPSED_STATE: 'chatSidebar_collapsedState'
 }
 
+// Helper function to deduplicate chats by _id
+const deduplicateChats = (chats: Doc<"chats">[]): Doc<"chats">[] => {
+  const seen = new Set<string>();
+  return chats.filter(chat => {
+    if (seen.has(chat._id)) {
+      return false;
+    }
+    seen.add(chat._id);
+    return true;
+  });
+};
+
 export function ChatSidebar({
   selectedChatId,
   collapsed: externalCollapsed,
@@ -128,10 +140,11 @@ export function ChatSidebar({
   // Initialize or refresh pagination state with first load
   useEffect(() => {
     if (initialChats && (paginationState.chats.length === 0 || shouldRefresh)) {
-
+      // Deduplicate initial chats to ensure uniqueness
+      const uniqueChats = deduplicateChats(initialChats.page);
       
       setPaginationState({
-        chats: initialChats.page,
+        chats: uniqueChats,
         isLoading: false,
         hasMore: !initialChats.isDone,
         cursor: initialChats.continueCursor,
@@ -145,24 +158,36 @@ export function ChatSidebar({
     }
   }, [initialChats, paginationState.chats.length, shouldRefresh]);
 
-  // Save pagination state to sessionStorage whenever it changes
+  // Save pagination state to sessionStorage whenever it changes (with deduplication)
   useEffect(() => {
     if (paginationState.chats.length > 0) {
       try {
-        sessionStorage.setItem(STORAGE_KEYS.PAGINATION_STATE, JSON.stringify(paginationState));
+        // Ensure we're saving deduplicated data
+        const stateToSave = {
+          ...paginationState,
+          chats: deduplicateChats(paginationState.chats)
+        };
+        sessionStorage.setItem(STORAGE_KEYS.PAGINATION_STATE, JSON.stringify(stateToSave));
       } catch (error) {
         console.error("Failed to save pagination state to session storage:", error);
       }
     }
   }, [paginationState]);
 
-  // Restore pagination state from sessionStorage on mount
+  // Restore pagination state from sessionStorage on mount with deduplication
   useEffect(() => {
     try {
       const savedState = sessionStorage.getItem(STORAGE_KEYS.PAGINATION_STATE);
       if (savedState) {
         const parsedState = JSON.parse(savedState);
-        setPaginationState(parsedState);
+        
+        // Deduplicate chats in case of corrupted cache
+        const uniqueChats = deduplicateChats(parsedState.chats);
+        
+        setPaginationState({
+          ...parsedState,
+          chats: uniqueChats
+        });
       }
     } catch (error) {
       console.error("Failed to restore pagination state from session storage:", error);
@@ -176,6 +201,14 @@ export function ChatSidebar({
     const handleChatCreated = () => {
       // Clear sessionStorage to force fresh load
       sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
+      // Reset pagination state completely to prevent duplicates
+      setPaginationState({
+        chats: [],
+        isLoading: false,
+        hasMore: true,
+        cursor: null,
+        error: null
+      });
       // Trigger refresh
       setShouldRefresh(true);
     };
@@ -183,6 +216,14 @@ export function ChatSidebar({
     const handleChatUpdated = () => {
       // Clear sessionStorage to force fresh load and reordering
       sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
+      // Reset pagination state completely to prevent duplicates
+      setPaginationState({
+        chats: [],
+        isLoading: false,
+        hasMore: true,
+        cursor: null,
+        error: null
+      });
       // Trigger refresh
       setShouldRefresh(true);
     };
@@ -197,7 +238,7 @@ export function ChatSidebar({
     };
   }, []);
 
-  // Load more chats function
+  // Load more chats function with deduplication
   const loadMoreChats = useCallback(async () => {
     if (paginationState.isLoading || !paginationState.hasMore) return;
     
@@ -211,14 +252,22 @@ export function ChatSidebar({
         }
       });
       
-      setPaginationState(prev => ({
-        ...prev,
-        chats: [...prev.chats, ...result.page],
-        cursor: result.continueCursor,
-        hasMore: !result.isDone,
-        isLoading: false,
-        error: null
-      }));
+      setPaginationState(prev => {
+        // Create a Set of existing chat IDs for fast lookup
+        const existingIds = new Set(prev.chats.map(chat => chat._id));
+        
+        // Filter out duplicates from new chats
+        const newChats = result.page.filter(chat => !existingIds.has(chat._id));
+        
+        return {
+          ...prev,
+          chats: [...prev.chats, ...newChats],
+          cursor: result.continueCursor,
+          hasMore: !result.isDone,
+          isLoading: false,
+          error: null
+        };
+      });
     } catch {
       setPaginationState(prev => ({
         ...prev,
