@@ -46,6 +46,11 @@ interface ChatsPaginationState {
   error: string | null;
 }
 
+const STORAGE_KEYS = {
+  PAGINATION_STATE: 'chatSidebar_paginationState',
+  SCROLL_POSITION: 'chatSidebar_scrollPosition'
+}
+
 export function ChatSidebar({
   selectedChatId,
 }: ChatSidebarProps) {
@@ -65,9 +70,22 @@ export function ChatSidebar({
   });
 
   // Initial load
-  const initialChats = useQuery(api.chats.listPaginated, {
-    paginationOpts: { numItems: 15, cursor: null }
-  });
+  // Determine if we should skip the initial query if data is already in sessionStorage
+  const shouldSkipInitialLoad = useMemo(() => {
+    if (typeof window === 'undefined') return false; // Prevent sessionStorage access on server
+    try {
+      const savedState = sessionStorage.getItem(STORAGE_KEYS.PAGINATION_STATE);
+      return savedState && JSON.parse(savedState).chats.length > 0;
+    } catch (error) {
+      console.error("Failed to read from session storage for initial load check:", error);
+      return false;
+    }
+  }, []);
+
+  const initialChats = useQuery(
+    api.chats.listPaginated,
+    shouldSkipInitialLoad ? "skip" : { paginationOpts: { numItems: 15, cursor: null } }
+  );
 
   // Initialize pagination state with first load
   useEffect(() => {
@@ -81,6 +99,32 @@ export function ChatSidebar({
       });
     }
   }, [initialChats, paginationState.chats.length]);
+
+  // Save pagination state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (paginationState.chats.length > 0) {
+      try {
+        sessionStorage.setItem(STORAGE_KEYS.PAGINATION_STATE, JSON.stringify(paginationState));
+      } catch (error) {
+        console.error("Failed to save pagination state to session storage:", error);
+      }
+    }
+  }, [paginationState]);
+
+  // Restore pagination state from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const savedState = sessionStorage.getItem(STORAGE_KEYS.PAGINATION_STATE);
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        setPaginationState(parsedState);
+      }
+    } catch (error) {
+      console.error("Failed to restore pagination state from session storage:", error);
+      // Clear corrupt data
+      sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
+    }
+  }, []);
 
   // Load more chats function
   const loadMoreChats = useCallback(async () => {
@@ -120,6 +164,16 @@ export function ChatSidebar({
       clearTimeout(timeoutId);
       // Capture the current target immediately before the timeout
       const currentTarget = e.currentTarget;
+      
+      // Save scroll position to sessionStorage
+      try {
+        if (currentTarget) {
+          sessionStorage.setItem(STORAGE_KEYS.SCROLL_POSITION, currentTarget.scrollTop.toString());
+        }
+      } catch (error) {
+        console.error("Failed to save scroll position to session storage:", error);
+      }
+
       timeoutId = setTimeout(() => {
         // Check if the element still exists
         if (!currentTarget) return;
@@ -134,6 +188,20 @@ export function ChatSidebar({
       }, 150); // 150ms debounce
     };
   }, [loadMoreChats, paginationState.isLoading, paginationState.hasMore]);
+
+  // Restore scroll position after initial chats are loaded or restored from session storage
+  useEffect(() => {
+    if (scrollContainerRef.current && paginationState.chats.length > 0) {
+      try {
+        const savedScrollPos = sessionStorage.getItem(STORAGE_KEYS.SCROLL_POSITION);
+        if (savedScrollPos) {
+          scrollContainerRef.current.scrollTop = parseInt(savedScrollPos);
+        }
+      } catch (error) {
+        console.error("Failed to restore scroll position from session storage:", error);
+      }
+    }
+  }, [paginationState.chats.length]);
 
   // Detectează dispozitivul mobil
   useEffect(() => {
