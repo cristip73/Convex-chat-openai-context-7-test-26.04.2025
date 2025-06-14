@@ -4,8 +4,8 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export const MODEL_OPTIONS = [
-  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
   { value: "gemini-2.5-flash-preview-05-20", label: "Gemini 2.5 Flash" },
+  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
   { value: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
   { value: "gpt-4.1", label: "GPT-4.1" },
   { value: "gpt-4o", label: "GPT-4o" },

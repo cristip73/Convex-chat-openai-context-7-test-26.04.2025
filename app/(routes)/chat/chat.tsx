@@ -8,6 +8,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { nanoid } from "nanoid";
 import { ModelSelector } from "@/components/model-selector";
+import { useRouter } from "next/navigation";
 
 interface ChatProps {
   initialChatId?: string | null;
@@ -18,7 +19,7 @@ interface ChatProps {
 export function Chat({
   initialChatId = null,
   initialMessages = [],
-  initialModel = "claude-sonnet-4-20250514",
+  initialModel = "gemini-2.5-flash-preview-05-20",
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,7 @@ export function Chat({
   
   const inputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
   const abortControllerRef = useRef<AbortController | null>(null);
+  const router = useRouter();
 
   // Refresh state when a different chat mounts
   useEffect(() => {
@@ -66,13 +68,19 @@ export function Chat({
       try {
         let currentChatId = chatId;
 
-        // Create chat if it doesn't exist yet
+        // Create chat if it doesn't exist yet and redirect immediately
         if (!currentChatId) {
           currentChatId = await createChat({
             title: content.slice(0, 30) + "...",
             model,
           });
-          setChatId(currentChatId);
+          
+          // Redirect immediately and let the new component handle the message
+          router.replace(`/chat/${currentChatId}`);
+          
+          // Store the pending message to be sent after redirect
+          localStorage.setItem('pendingMessage', content);
+          return;
         }
 
         // USER MESSAGE
@@ -181,8 +189,20 @@ export function Chat({
         abortControllerRef.current = null;
       }
     },
-    [chatId, createChat, messages, sendMessage, model]
+    [chatId, createChat, messages, sendMessage, model, router]
   );
+
+  // Handle pending message after redirect from new chat creation
+  useEffect(() => {
+    const pendingMessage = localStorage.getItem('pendingMessage');
+    if (pendingMessage && initialChatId) {
+      localStorage.removeItem('pendingMessage');
+      // Process the pending message after component has mounted
+      setTimeout(() => {
+        handleSendMessage(pendingMessage);
+      }, 100);
+    }
+  }, [initialChatId, handleSendMessage]);
 
   return (
     <div className="flex flex-col h-full max-h-[100dvh]">

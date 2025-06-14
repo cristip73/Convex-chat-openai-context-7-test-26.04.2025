@@ -7,43 +7,47 @@ import { ChatSidebar } from "@/components/chat-sidebar";
 import { Chat } from "./chat";
 import { Message } from "@/lib/types";
 
-export default function ChatShell() {
-  // currently chosen chat (null == new chat)
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  // increments every time user presses "+" to start a brand-new chat
+interface ChatShellProps {
+  chatId?: string | null;
+}
+
+export default function ChatShell({ chatId: propChatId = null }: ChatShellProps) {
+  // Use prop chatId or fall back to state for new chat navigation
   const [newChatCounter, setNewChatCounter] = useState(0);
+  
+  // Current chat ID is either from URL params or local state
+  const currentChatId = propChatId;
 
   // load history for the selected chat (skip when null)
   const chatData = useQuery(
     api.chats.get,
-    selectedChatId ? { id: selectedChatId } : "skip"
+    currentChatId ? { id: currentChatId } : "skip"
   );
   const initialMessages: Message[] = chatData?.messages ?? [];
-  const initialModel: string = chatData?.model ?? "claude-sonnet-4-20250514";
+  const initialModel: string = chatData?.model ?? "gemini-2.5-flash-preview-05-20";
 
-  /** User picked a chat from the sidebar. */
+  /** User picked a chat from the sidebar - now handled by router navigation */
   const handleSelectChat = (id: string | null) => {
     if (id) {
-      // existing chat
-      setSelectedChatId(id);
+      // Navigation is handled by ChatSidebar using router.push
+      // This callback is kept for compatibility but won't be used
     } else {
-      // brand-new chat
-      setSelectedChatId(null);
-      setNewChatCounter((c) => c + 1); // force fresh key
+      // For new chat, increment counter to force remount
+      setNewChatCounter((c) => c + 1);
     }
   };
 
   return (
     <div className="h-[100dvh] flex overflow-hidden">
       <ChatSidebar
-        selectedChatId={selectedChatId}
+        selectedChatId={currentChatId}
         onSelectChat={handleSelectChat}
       />
 
       <div className="flex-1 flex flex-col">
         <Chat
-          key={selectedChatId ? selectedChatId : `new-${newChatCounter}`}
-          initialChatId={selectedChatId}
+          key={currentChatId ? currentChatId : `new-${newChatCounter}`}
+          initialChatId={currentChatId}
           initialMessages={initialMessages}
           initialModel={initialModel}
         />

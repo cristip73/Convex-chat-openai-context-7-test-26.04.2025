@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, MenuIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ChatSidebarProps {
   selectedChatId: string | null;
@@ -19,6 +20,7 @@ export function ChatSidebar({
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const chats = useQuery(api.chats.list) ?? [];
+  const router = useRouter();
 
   // Detectează dispozitivul mobil
   useEffect(() => {
@@ -36,7 +38,14 @@ export function ChatSidebar({
 
   // Handler pentru selecția chat-ului, care colabrează automat bidebaul pe mobil
   const handleChatSelect = (id: string | null) => {
-    onSelectChat(id);
+    if (id) {
+      // Navigate to specific chat
+      router.push(`/chat/${id}`);
+    } else {
+      // Navigate to new chat
+      router.push('/chat');
+    }
+    
     if (isMobile) {
       setCollapsed(true);
     }
