@@ -85,10 +85,14 @@ export function ChatSidebar({
     error: null
   });
 
+  // Watch for new chat creation to refresh the sidebar
+  const [shouldRefresh, setShouldRefresh] = useState(false);
+
   // Initial load
   // Determine if we should skip the initial query if data is already in sessionStorage
   const shouldSkipInitialLoad = useMemo(() => {
     if (typeof window === 'undefined') return false; // Prevent sessionStorage access on server
+    if (shouldRefresh) return false; // Force refresh when new chat is created
     try {
       const savedState = sessionStorage.getItem(STORAGE_KEYS.PAGINATION_STATE);
       return savedState && JSON.parse(savedState).chats.length > 0;
@@ -96,16 +100,16 @@ export function ChatSidebar({
       console.error("Failed to read from session storage for initial load check:", error);
       return false;
     }
-  }, []);
+  }, [shouldRefresh]);
 
   const initialChats = useQuery(
     api.chats.listPaginated,
     shouldSkipInitialLoad ? "skip" : { paginationOpts: { numItems: 15, cursor: null } }
   );
 
-  // Initialize pagination state with first load
+  // Initialize or refresh pagination state with first load
   useEffect(() => {
-    if (initialChats && paginationState.chats.length === 0) {
+    if (initialChats && (paginationState.chats.length === 0 || shouldRefresh)) {
       setPaginationState({
         chats: initialChats.page,
         isLoading: false,
@@ -113,8 +117,13 @@ export function ChatSidebar({
         cursor: initialChats.continueCursor,
         error: null
       });
+      
+      // Reset refresh flag after refreshing
+      if (shouldRefresh) {
+        setShouldRefresh(false);
+      }
     }
-  }, [initialChats, paginationState.chats.length]);
+  }, [initialChats, paginationState.chats.length, shouldRefresh]);
 
   // Save pagination state to sessionStorage whenever it changes
   useEffect(() => {
@@ -140,6 +149,24 @@ export function ChatSidebar({
       // Clear corrupt data
       sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
     }
+  }, []);
+
+  // Listen for new chat creation events
+  useEffect(() => {
+    const handleChatCreated = (event: Event) => {
+      console.log("New chat created, refreshing sidebar...");
+      // Clear sessionStorage to force fresh load
+      sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
+      // Trigger refresh
+      setShouldRefresh(true);
+    };
+
+    // Listen for custom event from chat creation
+    window.addEventListener('chatCreated', handleChatCreated);
+    
+    return () => {
+      window.removeEventListener('chatCreated', handleChatCreated);
+    };
   }, []);
 
   // Load more chats function
