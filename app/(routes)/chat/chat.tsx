@@ -14,12 +14,14 @@ interface ChatProps {
   initialChatId?: string | null;
   initialMessages?: Message[];
   initialModel?: string;
+  hideHeader?: boolean;
 }
 
 export function Chat({
   initialChatId = null,
   initialMessages = [],
   initialModel = "gemini-2.5-flash-preview-05-20",
+  hideHeader = false,
 }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
@@ -213,14 +215,16 @@ export function Chat({
 
   return (
     <div className="flex flex-col h-full max-h-[100dvh]">
-      <div className="border-b py-2 px-4 flex items-center justify-between gap-2 sticky top-0 bg-background z-20">
-        <div className="flex items-center">
-          <h1 className="text-xl font-bold truncate hidden md:block">Chat</h1>
-          {/* Spacer for mobile to account for hamburger menu */}
-          <div className="w-10 md:hidden"></div>
+      {!hideHeader && (
+        <div className="border-b py-2 px-4 flex items-center justify-between gap-2 sticky top-0 bg-background z-20">
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold truncate hidden md:block">Chat</h1>
+            {/* Spacer for mobile to account for hamburger menu */}
+            <div className="w-10 md:hidden"></div>
+          </div>
+          <ModelSelector value={model} onChange={handleModelChange} className="max-w-[180px]" />
         </div>
-        <ModelSelector value={model} onChange={handleModelChange} className="max-w-[180px]" />
-      </div>
+      )}
 
       <div className="flex-1 overflow-y-auto min-h-0">
         <ChatList messages={messages} />

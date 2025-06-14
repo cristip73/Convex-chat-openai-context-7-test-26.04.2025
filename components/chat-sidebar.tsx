@@ -5,7 +5,7 @@ import { useQuery, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, MenuIcon, Loader2, Trash2Icon } from "lucide-react";
+import { Loader2, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Doc } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -13,6 +13,8 @@ import { toast } from "sonner";
 interface ChatSidebarProps {
   selectedChatId: string | null;
   onSelectChat?: (id: string | null) => void;
+  collapsed?: boolean;
+  onToggleCollapsed?: (collapsed: boolean) => void;
 }
 
 interface ChatItemProps {
@@ -70,9 +72,11 @@ const STORAGE_KEYS = {
 
 export function ChatSidebar({
   selectedChatId,
+  collapsed: externalCollapsed,
+  onToggleCollapsed,
 }: ChatSidebarProps) {
   // Initialize collapsed state from sessionStorage for mobile persistence
-  const [collapsed, setCollapsed] = useState(() => {
+  const [internalCollapsed, setInternalCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
       const savedCollapsed = sessionStorage.getItem(STORAGE_KEYS.COLLAPSED_STATE);
@@ -82,6 +86,9 @@ export function ChatSidebar({
       return false;
     }
   });
+
+  // Use external collapsed state if provided, otherwise use internal state
+  const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed;
   const [isMobile, setIsMobile] = useState(false);
   const convex = useConvex();
   const router = useRouter();
@@ -291,9 +298,13 @@ export function ChatSidebar({
     }
     
     if (isMobile) {
-      setCollapsed(true);
+      if (onToggleCollapsed) {
+        onToggleCollapsed(true);
+      } else {
+        setInternalCollapsed(true);
+      }
     }
-  }, [router, isMobile]);
+  }, [router, isMobile, onToggleCollapsed]);
 
   // Handler for deleting a chat
   const handleDeleteChat = useCallback(async (chatId: string) => {
@@ -334,29 +345,6 @@ export function ChatSidebar({
         collapsed ? "w-0 md:w-12" : "w-64"
       )}
     >
-      <div className="flex items-center gap-2 p-2 border-b">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => setCollapsed((c: boolean) => !c)}
-        >
-          <MenuIcon className="size-4" />
-          <span className="sr-only">Toggle sidebar</span>
-        </Button>
-        {!collapsed && (
-          <>
-            <span className="font-semibold text-sm flex-1">Conversații</span>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => handleChatSelect(null)}
-            >
-              <PlusIcon className="size-4" />
-              <span className="sr-only">New chat</span>
-            </Button>
-          </>
-        )}
-      </div>
 
       {!collapsed && (
         <div 
