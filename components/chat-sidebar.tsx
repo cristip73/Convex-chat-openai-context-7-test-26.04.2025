@@ -154,7 +154,7 @@ export function ChatSidebar({
   // Listen for new chat creation events
   useEffect(() => {
     const handleChatCreated = (event: Event) => {
-      console.log("New chat created, refreshing sidebar...");
+      console.log("New chat created, refreshing sidebar...", event.type);
       // Clear sessionStorage to force fresh load
       sessionStorage.removeItem(STORAGE_KEYS.PAGINATION_STATE);
       // Trigger refresh
