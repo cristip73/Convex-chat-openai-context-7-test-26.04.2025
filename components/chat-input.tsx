@@ -85,7 +85,7 @@ export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: 
         onKeyDown={handleKeyDown}
         placeholder={isMobile ? "Type a message..." : "Type a message... (Enter to send, Shift+Enter for new line)"}
         disabled={isLoading && !isStreaming}
-        className="flex-1 min-h-[40px] max-h-[200px] resize-none"
+        className={`flex-1 min-h-[40px] max-h-[200px] resize-none ${isMobile ? 'text-base' : ''}`}
         rows={1}
       />
       <Button 

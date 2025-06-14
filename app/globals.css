@@ -136,24 +136,51 @@
   /* Mobile text wrapping fixes */
   @media (max-width: 768px) {
     .markdown-content {
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      hyphens: auto;
-      max-width: 100%;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      word-break: break-word !important;
+      hyphens: auto !important;
+      max-width: 100% !important;
+      width: 100% !important;
     }
     
     .markdown-content * {
       max-width: 100% !important;
       overflow-wrap: break-word !important;
       word-wrap: break-word !important;
+      word-break: break-word !important;
+      white-space: pre-wrap !important;
     }
     
     /* Ensure prose content doesn't overflow on mobile */
     .prose {
       max-width: 100% !important;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
+      overflow-wrap: break-word !important;
+      word-wrap: break-word !important;
+      word-break: break-word !important;
+      width: 100% !important;
     }
-  }
+    
+    /* Additional mobile text fixes */
+    .prose p, .prose div, .prose span {
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
+      word-wrap: break-word !important;
+      word-break: break-word !important;
+    }
+    
+         /* Force break long words and URLs */
+     .prose pre, .prose code {
+       max-width: 100% !important;
+       overflow-wrap: break-word !important;
+       word-wrap: break-word !important;
+       word-break: break-all !important;
+       white-space: pre-wrap !important;
+     }
+     
+     /* Prevent zoom on input focus on mobile */
+     input, textarea, select {
+       font-size: 16px !important;
+     }
+   }
 }

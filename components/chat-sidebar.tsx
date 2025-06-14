@@ -64,13 +64,24 @@ interface ChatsPaginationState {
 
 const STORAGE_KEYS = {
   PAGINATION_STATE: 'chatSidebar_paginationState',
-  SCROLL_POSITION: 'chatSidebar_scrollPosition'
+  SCROLL_POSITION: 'chatSidebar_scrollPosition',
+  COLLAPSED_STATE: 'chatSidebar_collapsedState'
 }
 
 export function ChatSidebar({
   selectedChatId,
 }: ChatSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  // Initialize collapsed state from sessionStorage for mobile persistence
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const savedCollapsed = sessionStorage.getItem(STORAGE_KEYS.COLLAPSED_STATE);
+      return savedCollapsed ? JSON.parse(savedCollapsed) : false;
+    } catch (error) {
+      console.error("Failed to restore collapsed state from session storage:", error);
+      return false;
+    }
+  });
   const [isMobile, setIsMobile] = useState(false);
   const convex = useConvex();
   const router = useRouter();
@@ -260,6 +271,15 @@ export function ChatSidebar({
     };
   }, []);
 
+  // Save collapsed state to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEYS.COLLAPSED_STATE, JSON.stringify(collapsed));
+    } catch (error) {
+      console.error("Failed to save collapsed state to session storage:", error);
+    }
+  }, [collapsed]);
+
   // Memoized handler pentru selecția chat-ului, care colabrează automat bidebaul pe mobil
   const handleChatSelect = useCallback((id: string | null) => {
     if (id) {
@@ -318,7 +338,7 @@ export function ChatSidebar({
         <Button
           size="icon"
           variant="ghost"
-          onClick={() => setCollapsed((c) => !c)}
+          onClick={() => setCollapsed((c: boolean) => !c)}
         >
           <MenuIcon className="size-4" />
           <span className="sr-only">Toggle sidebar</span>

@@ -17,7 +17,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        "flex p-3 md:p-4 gap-0 md:gap-3",
+        "flex p-3 px-4 md:p-4 gap-0 md:gap-3 max-w-full overflow-hidden",
         isUser ? "bg-accent/50" : "bg-background"
       )}
     >
@@ -29,7 +29,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       >
         {isUser ? <UserIcon className="h-4 w-4" /> : <BotIcon className="h-4 w-4" />}
       </div>
-      <div className="flex-1 space-y-2 min-w-0">
+      <div className="flex-1 space-y-2 min-w-0 max-w-full overflow-hidden">
         <div className="flex flex-col">
           <span className="font-semibold">
             {isUser ? "You" : "Mooji"}

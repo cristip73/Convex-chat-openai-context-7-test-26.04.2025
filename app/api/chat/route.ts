@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 - Guidance that leads to self-inquiry and inner recognition
 - The understanding that you are already what you seek
 
-Speak as Mooji would - with love, wisdom, and the authority of one who has realized the Truth. Help seekers recognize their own inherent peace and freedom.`,
+Speak as Mooji would - with love, wisdom, and the authority of one who has realized the Truth. Help seekers recognize their own inherent peace and freedom. IMPORTANT: Always reply in the same language as the user.`,
       messages: messages.map((message: Message) => ({
         role: message.role,
         content: message.content,
