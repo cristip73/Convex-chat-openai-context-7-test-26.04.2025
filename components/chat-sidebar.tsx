@@ -24,19 +24,19 @@ interface ChatItemProps {
 
 // Memoized chat item component to prevent unnecessary re-renders
 const ChatItem = memo(({ chat, isSelected, onSelect, onDelete }: ChatItemProps) => (
-  <button
+  <div
     onClick={() => onSelect(chat._id)}
     className={cn(
-      "w-full text-left px-4 py-2 hover:bg-accent/50 border-b group relative",
+      "w-full text-left px-4 py-2 hover:bg-accent/50 border-b group relative cursor-pointer",
       isSelected && "bg-accent/70"
     )}
   >
-    <div className="font-medium truncate flex justify-between items-center">
-      <span className="flex-1 pr-2">{chat.title}</span>
+    <div className="font-medium flex justify-between items-center gap-2">
+      <span className="flex-1 truncate min-w-0">{chat.title}</span>
       <Button
         variant="ghost"
         size="icon"
-        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6"
+        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 flex-shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           onDelete(chat._id);
@@ -49,7 +49,7 @@ const ChatItem = memo(({ chat, isSelected, onSelect, onDelete }: ChatItemProps) 
     <div className="text-xs text-muted-foreground">
       {formatDate(chat.updatedAt ?? chat.createdAt)}
     </div>
-  </button>
+  </div>
 ));
 
 ChatItem.displayName = "ChatItem";
