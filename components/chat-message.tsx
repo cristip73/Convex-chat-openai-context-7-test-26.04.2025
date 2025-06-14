@@ -17,13 +17,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        "flex gap-3 p-4",
+        "flex p-3 md:p-4 gap-0 md:gap-3",
         isUser ? "bg-accent/50" : "bg-background"
       )}
     >
       <div
         className={cn(
-          "flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-md border shadow",
+          "hidden md:flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-md border shadow",
           isUser ? "bg-primary text-primary-foreground" : "bg-background"
         )}
       >
