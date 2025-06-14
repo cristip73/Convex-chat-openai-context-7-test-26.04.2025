@@ -71,11 +71,9 @@ const STORAGE_KEYS = {
 export function ChatSidebar({
   selectedChatId,
 }: ChatSidebarProps) {
-  // Initialize collapsed state from sessionStorage (only for desktop persistence)
+  // Initialize collapsed state from sessionStorage for mobile persistence
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false;
-    // Don't restore collapsed state on mobile - always start expanded
-    if (window.innerWidth < 768) return false;
     try {
       const savedCollapsed = sessionStorage.getItem(STORAGE_KEYS.COLLAPSED_STATE);
       return savedCollapsed ? JSON.parse(savedCollapsed) : false;
@@ -273,17 +271,14 @@ export function ChatSidebar({
     };
   }, []);
 
-  // Save collapsed state to sessionStorage whenever it changes (only on desktop)
+  // Save collapsed state to sessionStorage whenever it changes
   useEffect(() => {
-    // Only persist collapsed state on desktop, not on mobile
-    if (!isMobile) {
-      try {
-        sessionStorage.setItem(STORAGE_KEYS.COLLAPSED_STATE, JSON.stringify(collapsed));
-      } catch (error) {
-        console.error("Failed to save collapsed state to session storage:", error);
-      }
+    try {
+      sessionStorage.setItem(STORAGE_KEYS.COLLAPSED_STATE, JSON.stringify(collapsed));
+    } catch (error) {
+      console.error("Failed to save collapsed state to session storage:", error);
     }
-  }, [collapsed, isMobile]);
+  }, [collapsed]);
 
   // Memoized handler pentru selecția chat-ului, care colabrează automat bidebaul pe mobil
   const handleChatSelect = useCallback((id: string | null) => {
