@@ -5,10 +5,9 @@ import { useQuery, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, MenuIcon, Loader2, Trash2Icon } from "lucide-react";
+import { PlusIcon, MenuIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Doc } from "@/convex/_generated/dataModel";
-import { toast } from "sonner";
 
 interface ChatSidebarProps {
   selectedChatId: string | null;
@@ -18,48 +17,23 @@ interface ChatSidebarProps {
 interface ChatItemProps {
   chat: Doc<"chats">;
   isSelected: boolean;
-  isDeleting?: boolean;
   onSelect: (id: string) => void;
-  onDelete: (id: string) => Promise<void>;
 }
 
 // Memoized chat item component to prevent unnecessary re-renders
-const ChatItem = memo(({ chat, isSelected, isDeleting, onSelect, onDelete }: ChatItemProps) => (
-  <div
-    onClick={() => !isDeleting && onSelect(chat._id)}
+const ChatItem = memo(({ chat, isSelected, onSelect }: ChatItemProps) => (
+  <button
+    onClick={() => onSelect(chat._id)}
     className={cn(
-      "w-full text-left px-4 py-2 hover:bg-accent/50 border-b group relative cursor-pointer",
-      isSelected && "bg-accent/70",
-      isDeleting && "opacity-60 cursor-wait"
+      "w-full text-left px-4 py-2 hover:bg-accent/50 border-b",
+      isSelected && "bg-accent/70"
     )}
   >
-    <div className="grid grid-cols-[1fr_auto] gap-2 items-center min-w-0">
-      <div className="min-w-0">
-        <div className="font-medium truncate">{chat.title}</div>
-        <div className="text-xs text-muted-foreground">
-          {formatDate(chat.updatedAt ?? chat.createdAt)}
-        </div>
-      </div>
-      {isDeleting ? (
-        <div className="h-6 w-6 flex items-center justify-center flex-shrink-0">
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6 flex-shrink-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(chat._id);
-          }}
-        >
-          <Trash2Icon className="h-4 w-4 text-muted-foreground" />
-          <span className="sr-only">Delete chat</span>
-        </Button>
-      )}
+    <div className="font-medium truncate">{chat.title}</div>
+    <div className="text-xs text-muted-foreground">
+      {formatDate(chat.updatedAt ?? chat.createdAt)}
     </div>
-  </div>
+  </button>
 ));
 
 ChatItem.displayName = "ChatItem";
@@ -70,7 +44,6 @@ interface ChatsPaginationState {
   hasMore: boolean;
   cursor: string | null;
   error: string | null;
-  deletingIds: Set<string>; // Track chats being deleted
 }
 
 const STORAGE_KEYS = {
@@ -93,8 +66,7 @@ export function ChatSidebar({
     isLoading: false,
     hasMore: true,
     cursor: null,
-    error: null,
-    deletingIds: new Set()
+    error: null
   });
 
   // Initial load
@@ -123,8 +95,7 @@ export function ChatSidebar({
         isLoading: false,
         hasMore: !initialChats.isDone,
         cursor: initialChats.continueCursor,
-        error: null,
-        deletingIds: new Set()
+        error: null
       });
     }
   }, [initialChats, paginationState.chats.length]);
@@ -261,90 +232,6 @@ export function ChatSidebar({
     }
   }, [router, isMobile]);
 
-  // Handler for deleting a chat
-  const handleDeleteChat = useCallback(async (chatId: string) => {
-    if (typeof window === 'undefined') return; // Prevent execution on server
-
-    // Prevent multiple delete requests for the same chat
-    if (paginationState.deletingIds.has(chatId)) return;
-
-    const confirmDelete = window.confirm("Ești sigur că vrei să ștergi acest chat? Această acțiune este ireversibilă.");
-    if (!confirmDelete) return;
-
-    // Save current state for potential revert
-    const chatToDelete = paginationState.chats.find(chat => chat._id === chatId);
-    if (!chatToDelete) return;
-
-    // Add to deleting state and optimistically remove from UI
-    setPaginationState(prev => ({
-      ...prev,
-      chats: prev.chats.filter(chat => chat._id !== chatId),
-      deletingIds: new Set(prev.deletingIds).add(chatId)
-    }));
-
-    // If the currently selected chat is being deleted, navigate to a new chat
-    if (selectedChatId === chatId) {
-      router.push('/chat');
-    }
-
-    try {
-      await convex.mutation(api.chats.remove, { id: chatId });
-      
-      // Successfully deleted - remove from deleting state and update sessionStorage
-      setPaginationState(prev => {
-        const newDeletingIds = new Set(prev.deletingIds);
-        newDeletingIds.delete(chatId);
-        return {
-          ...prev,
-          deletingIds: newDeletingIds
-        };
-      });
-
-      // Update sessionStorage to remove deleted chat
-      try {
-        const storedChats = sessionStorage.getItem(STORAGE_KEYS.PAGINATION_STATE);
-        if (storedChats) {
-          const parsedChats = JSON.parse(storedChats);
-          if (Array.isArray(parsedChats.chats)) {
-            parsedChats.chats = parsedChats.chats.filter((chat: Doc<"chats">) => chat._id !== chatId);
-            sessionStorage.setItem(STORAGE_KEYS.PAGINATION_STATE, JSON.stringify(parsedChats));
-          }
-        }
-      } catch (storageError) {
-        console.error("Failed to update sessionStorage after chat deletion:", storageError);
-      }
-
-      toast.success("Chat șters cu succes!");
-    } catch (error) {
-      console.error("Failed to delete chat:", error);
-      
-      // Revert optimistic update - restore the deleted chat in its original position
-      setPaginationState(prev => {
-        const newDeletingIds = new Set(prev.deletingIds);
-        newDeletingIds.delete(chatId);
-        
-        // Find the correct position to restore the chat
-        const originalIndex = paginationState.chats.findIndex(chat => chat._id === chatId);
-        const chatsWithRestored = [...prev.chats];
-        
-        if (originalIndex >= 0) {
-          chatsWithRestored.splice(originalIndex, 0, chatToDelete);
-        } else {
-          // If we can't find original position, add at the beginning
-          chatsWithRestored.unshift(chatToDelete);
-        }
-        
-        return {
-          ...prev,
-          chats: chatsWithRestored,
-          deletingIds: newDeletingIds
-        };
-      });
-      
-      toast.error("Eroare la ștergerea chat-ului. Te rog încearcă din nou.");
-    }
-  }, [convex, router, selectedChatId, paginationState.chats, paginationState.deletingIds]);
-
   return (
     <div
       className={cn(
@@ -387,9 +274,7 @@ export function ChatSidebar({
               key={chat._id}
               chat={chat}
               isSelected={selectedChatId === chat._id}
-              isDeleting={paginationState.deletingIds.has(chat._id)}
               onSelect={handleChatSelect}
-              onDelete={handleDeleteChat}
             />
           ))}
           
