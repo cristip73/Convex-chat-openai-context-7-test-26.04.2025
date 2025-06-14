@@ -5,9 +5,10 @@ import { useQuery, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, MenuIcon, Loader2 } from "lucide-react";
+import { PlusIcon, MenuIcon, Loader2, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Doc } from "@/convex/_generated/dataModel";
+import { toast } from "sonner";
 
 interface ChatSidebarProps {
   selectedChatId: string | null;
@@ -18,18 +19,33 @@ interface ChatItemProps {
   chat: Doc<"chats">;
   isSelected: boolean;
   onSelect: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 // Memoized chat item component to prevent unnecessary re-renders
-const ChatItem = memo(({ chat, isSelected, onSelect }: ChatItemProps) => (
+const ChatItem = memo(({ chat, isSelected, onSelect, onDelete }: ChatItemProps) => (
   <button
     onClick={() => onSelect(chat._id)}
     className={cn(
-      "w-full text-left px-4 py-2 hover:bg-accent/50 border-b",
+      "w-full text-left px-4 py-2 hover:bg-accent/50 border-b group relative",
       isSelected && "bg-accent/70"
     )}
   >
-    <div className="font-medium truncate">{chat.title}</div>
+    <div className="font-medium truncate flex justify-between items-center">
+      <span className="flex-1 pr-2">{chat.title}</span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-6 w-6"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(chat._id);
+        }}
+      >
+        <Trash2Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="sr-only">Delete chat</span>
+      </Button>
+    </div>
     <div className="text-xs text-muted-foreground">
       {formatDate(chat.updatedAt ?? chat.createdAt)}
     </div>
@@ -232,6 +248,38 @@ export function ChatSidebar({
     }
   }, [router, isMobile]);
 
+  // Handler for deleting a chat
+  const handleDeleteChat = useCallback(async (chatId: string) => {
+    if (typeof window === 'undefined') return; // Prevent execution on server
+
+    const confirmDelete = window.confirm("Ești sigur că vrei să ștergi acest chat? Această acțiune este ireversibilă.");
+    if (!confirmDelete) return;
+
+    // Optimistically update the UI
+    setPaginationState(prev => ({
+      ...prev,
+      chats: prev.chats.filter(chat => chat._id !== chatId)
+    }));
+
+    // If the currently selected chat is being deleted, navigate to a new chat
+    if (selectedChatId === chatId) {
+      router.push('/chat');
+    }
+
+    try {
+      await convex.mutation(api.chats.remove, { id: chatId });
+      // No need to update state again, as it was optimistically updated
+      toast.success("Chat șters cu succes!");
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      // Revert optimistic update on error
+      // This is a basic revert, a more robust solution might fetch the latest state
+      toast.error("Eroare la ștergerea chat-ului. Te rog încearcă din nou.");
+      // Re-fetch to ensure consistency if optimistic update failed
+      loadMoreChats(); // Reloads to show the deleted chat if deletion failed
+    }
+  }, [convex, router, selectedChatId, loadMoreChats]);
+
   return (
     <div
       className={cn(
@@ -275,6 +323,7 @@ export function ChatSidebar({
               chat={chat}
               isSelected={selectedChatId === chat._id}
               onSelect={handleChatSelect}
+              onDelete={handleDeleteChat}
             />
           ))}
           
