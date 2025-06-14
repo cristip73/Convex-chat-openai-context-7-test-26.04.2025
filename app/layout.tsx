@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   description: "A ChatGPT clone built by Cristi with Next.js, Convex, and Vercel AI SDK",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

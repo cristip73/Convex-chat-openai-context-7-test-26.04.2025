@@ -17,7 +17,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        "flex p-3 md:p-4 gap-0 md:gap-3 max-w-full overflow-hidden",
+        "flex p-3 px-4 md:p-4 gap-0 md:gap-3 max-w-full overflow-hidden",
         isUser ? "bg-accent/50" : "bg-background"
       )}
     >

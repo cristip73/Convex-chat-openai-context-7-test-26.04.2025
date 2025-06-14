@@ -169,13 +169,18 @@
       word-break: break-word !important;
     }
     
-    /* Force break long words and URLs */
-    .prose pre, .prose code {
-      max-width: 100% !important;
-      overflow-wrap: break-word !important;
-      word-wrap: break-word !important;
-      word-break: break-all !important;
-      white-space: pre-wrap !important;
-    }
-  }
+         /* Force break long words and URLs */
+     .prose pre, .prose code {
+       max-width: 100% !important;
+       overflow-wrap: break-word !important;
+       word-wrap: break-word !important;
+       word-break: break-all !important;
+       white-space: pre-wrap !important;
+     }
+     
+     /* Prevent zoom on input focus on mobile */
+     input, textarea, select {
+       font-size: 16px !important;
+     }
+   }
 }
