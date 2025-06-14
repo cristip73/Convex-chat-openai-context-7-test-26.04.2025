@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { SendIcon, Square } from "lucide-react";
 
 interface ChatInputProps {
@@ -10,7 +10,7 @@ interface ChatInputProps {
   onStop: () => void;
   isLoading: boolean;
   isStreaming: boolean;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLTextAreaElement>;
 }
 
 export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: ChatInputProps) {
@@ -26,6 +26,18 @@ export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: 
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (isStreaming) {
+        onStop();
+      } else if (input.trim() && !isLoading) {
+        onSend(input);
+        setInput("");
+      }
+    }
+  };
+
   const handleButtonClick = () => {
     if (isStreaming) {
       onStop();
@@ -37,13 +49,15 @@ export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: 
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2 p-4 border-t">
-      <Input
+      <Textarea
         ref={inputRef}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type a message..."
+        onKeyDown={handleKeyDown}
+        placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
         disabled={isLoading && !isStreaming}
-        className="flex-1"
+        className="flex-1 min-h-[40px] max-h-[200px] resize-none"
+        rows={1}
       />
       <Button 
         type="button"

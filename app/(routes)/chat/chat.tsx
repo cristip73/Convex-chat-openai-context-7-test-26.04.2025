@@ -27,7 +27,7 @@ export function Chat({
   const [chatId, setChatId] = useState<string | null>(initialChatId);
   const [model, setModel] = useState<string>(initialModel);
   
-  const inputRef = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>;
+  const inputRef = useRef<HTMLTextAreaElement>(null) as React.RefObject<HTMLTextAreaElement>;
   const abortControllerRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
