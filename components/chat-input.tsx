@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SendIcon, Square } from "lucide-react";
@@ -15,6 +15,21 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: ChatInputProps) {
   const [input, setInput] = useState<string>("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    
+    return () => {
+      window.removeEventListener("resize", checkIfMobile);
+    };
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +44,25 @@ export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (isStreaming) {
-        onStop();
-      } else if (input.trim() && !isLoading) {
-        onSend(input);
-        setInput("");
+      // On mobile, Enter should only create new line, not send
+      if (isMobile) {
+        const textarea = e.target as HTMLTextAreaElement;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const newValue = input.substring(0, start) + '\n' + input.substring(end);
+        setInput(newValue);
+        // Move cursor after the newline
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1;
+        }, 0);
+      } else {
+        // Desktop behavior: Enter sends message
+        if (isStreaming) {
+          onStop();
+        } else if (input.trim() && !isLoading) {
+          onSend(input);
+          setInput("");
+        }
       }
     }
   };
@@ -54,7 +83,7 @@ export function ChatInput({ onSend, onStop, isLoading, isStreaming, inputRef }: 
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+        placeholder={isMobile ? "Type a message..." : "Type a message... (Enter to send, Shift+Enter for new line)"}
         disabled={isLoading && !isStreaming}
         className="flex-1 min-h-[40px] max-h-[200px] resize-none"
         rows={1}

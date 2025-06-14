@@ -29,7 +29,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
       >
         {isUser ? <UserIcon className="h-4 w-4" /> : <BotIcon className="h-4 w-4" />}
       </div>
-      <div className="flex-1 space-y-2">
+      <div className="flex-1 space-y-2 min-w-0">
         <div className="flex flex-col">
           <span className="font-semibold">
             {isUser ? "You" : "Mooji"}
@@ -41,13 +41,13 @@ export function ChatMessage({ message }: ChatMessageProps) {
           ) : null}
         </div>
         {isUser ? (
-          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none markdown-content">
+          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none markdown-content break-words overflow-wrap-anywhere">
             <ReactMarkdown remarkPlugins={[remarkBreaks]}>
               {message.content}
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none markdown-content">
+          <div className="prose prose-neutral dark:prose-invert prose-pre:bg-zinc-700 prose-pre:text-zinc-100 max-w-none markdown-content break-words overflow-wrap-anywhere">
             <ReactMarkdown remarkPlugins={[remarkBreaks]}>
               {message.content}
             </ReactMarkdown>

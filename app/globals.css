@@ -132,4 +132,28 @@
   .markdown-content p:last-child {
     margin-bottom: 0; /* Remove margin from last paragraph */
   }
+
+  /* Mobile text wrapping fixes */
+  @media (max-width: 768px) {
+    .markdown-content {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      hyphens: auto;
+      max-width: 100%;
+    }
+    
+    .markdown-content * {
+      max-width: 100% !important;
+      overflow-wrap: break-word !important;
+      word-wrap: break-word !important;
+    }
+    
+    /* Ensure prose content doesn't overflow on mobile */
+    .prose {
+      max-width: 100% !important;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
+  }
 }
